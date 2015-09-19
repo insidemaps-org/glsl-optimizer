@@ -547,11 +547,11 @@ static void get_metal_type_size(const glsl_type* type, glsl_precision prec, int&
 
 void ir_print_metal_visitor::visit(ir_variable *ir)
 {
-	const char *const cent = (ir->data.centroid) ? "centroid " : "";
-	const char *const inv = (ir->data.invariant) ? "invariant " : "";
-	const char *const mode[ir_var_mode_count] = { "", "  ", "  ", "  ", "  ", "in ", "out ", "inout ", "", "", "" };
+	//const char *const cent = (ir->data.centroid) ? "centroid " : "";
+	//const char *const inv = (ir->data.invariant) ? "invariant " : "";
+	//const char *const mode[ir_var_mode_count] = { "", "  ", "  ", "  ", "  ", "in ", "out ", "inout ", "", "", "" };
 
-	const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
+	//const char *const interp[] = { "", "smooth ", "flat ", "noperspective " };
 
 	// give an id to any variable defined in a function that is not an uniform
 	if ((this->mode == kPrintGlslNone && ir->data.mode != ir_var_uniform))
@@ -586,8 +586,9 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		}
 	}
 
-	buffer.asprintf_append ("%s%s%s%s",
-							cent, inv, interp[ir->data.interpolation], mode[ir->data.mode]);
+	//buffer.asprintf_append ("%s%s%s%s",
+	//						cent, inv, interp[ir->data.interpolation], mode[ir->data.mode]);
+    
 	print_type(buffer, ir, ir->type, false);
 	buffer.asprintf_append (" ");
 	print_var_name (ir);
@@ -610,6 +611,19 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		buffer.asprintf_append (" [[vertex_id]]");
 	else if (!strcmp(ir->name, "gl_InstanceID"))
 		buffer.asprintf_append (" [[instance_id]]");
+    
+    // interpolation qualifiers go on fragment input only
+    // https://forums.developer.apple.com/message/124447#124447
+    //if (this->mode_whole == kPrintGlslFragment)
+    {
+        if (ir->data.interpolation == INTERP_QUALIFIER_FLAT)
+            buffer.asprintf_append (" [[flat]]");
+        
+        // TODO
+        assert(!ir->data.centroid);
+        assert(!ir->data.invariant);
+        assert(ir->data.interpolation != INTERP_QUALIFIER_NOPERSPECTIVE);
+    }
 
 	// vertex shader input attribute?
 	if (this->mode_whole == kPrintGlslVertex && ir->data.mode == ir_var_shader_in)
