@@ -19,6 +19,12 @@ static int printhelp(const char* msg)
 	return 1;
 }
 
+extern "C" void
+_mesa_error_no_memory(const char *caller)
+{
+}
+
+
 static bool init(glslopt_target target)
 {
 	gContext = glslopt_initialize(target);

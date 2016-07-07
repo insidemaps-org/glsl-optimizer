@@ -5,6 +5,12 @@
 
 #define GL_GLEXT_PROTOTYPES 1
 
+extern "C" void
+_mesa_error_no_memory(const char *caller)
+{
+}
+
+
 #if __linux__
 #define GOT_GFX 0
 #else
