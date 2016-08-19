@@ -612,7 +612,6 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 	else if (!strcmp(ir->name, "gl_InstanceID"))
 		buffer.asprintf_append (" [[instance_id]]");
     
-    // interpolation qualifiers go on fragment input only
     // https://forums.developer.apple.com/message/124447#124447
     //if (this->mode_whole == kPrintGlslFragment)
     {
@@ -1287,6 +1286,21 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 	
 	// texture name & call to sample
 	ir->sampler->accept(this);
+    
+    if (ir->op == ir_txf)
+    {
+        assert(sampler_dim == GLSL_SAMPLER_DIM_2D);
+        
+        buffer.asprintf_append (".read((uint2)(");
+        ir->coordinate->accept(this);
+        buffer.asprintf_append ("), ");
+        ir->lod_info.lod->accept(this);
+        buffer.asprintf_append (")");
+        
+        return;
+    }
+    
+    
 	if (is_shadow)
 	{
 		// For shadow sampling, Metal right now needs a hardcoded sampler state :|
@@ -1342,7 +1356,6 @@ void ir_print_metal_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append ("))");
 	}
 	
-	//@TODO: texelFetch
 	//@TODO: projected
 	//@TODO: shadowmaps
 	//@TODO: pixel offsets
