@@ -840,6 +840,8 @@ builtin_variable_generator::generate_vs_special_vars()
 	   add_system_value(SYSTEM_VALUE_INSTANCE_ID, state->metal_target ? uint_t : int_t, "gl_InstanceID", glsl_precision_high);
    if (state->AMD_vertex_shader_layer_enable)
       add_output(VARYING_SLOT_LAYER, int_t, "gl_Layer", glsl_precision_high);
+   if (state->metal_target)
+      add_output(VARYING_SLOT_LAYER, uint_t, "gl_Layer", glsl_precision_high);
    if (state->AMD_vertex_shader_viewport_index_enable)
       add_output(VARYING_SLOT_VIEWPORT, int_t, "gl_ViewportIndex", glsl_precision_high);
    if (compatibility) {

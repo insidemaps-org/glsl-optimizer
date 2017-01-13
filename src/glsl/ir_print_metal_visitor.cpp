@@ -611,6 +611,8 @@ void ir_print_metal_visitor::visit(ir_variable *ir)
 		buffer.asprintf_append (" [[vertex_id]]");
 	else if (!strcmp(ir->name, "gl_InstanceID"))
 		buffer.asprintf_append (" [[instance_id]]");
+    else if (!strcmp(ir->name, "gl_Layer"))
+        buffer.asprintf_append (" [[render_target_array_index]]");
     
     // https://forums.developer.apple.com/message/124447#124447
     //if (this->mode_whole == kPrintGlslFragment)
