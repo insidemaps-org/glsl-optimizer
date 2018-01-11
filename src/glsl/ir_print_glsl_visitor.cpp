@@ -160,7 +160,7 @@ public:
 	int		uses_texlodproj_impl; // 3 bits per tex_dimension, bit set for each precision if any texture sampler needs the GLES2 lod workaround.
 };
 
-static void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
+void print_texlod_workarounds(int usage_bitfield, int usage_proj_bitfield, string_buffer &str)
 {
 	static const char *precStrings[3] = {"lowp", "mediump", "highp"};
 	static const char *precNameStrings[3] = { "low_", "medium_", "high_" };
@@ -291,7 +291,9 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	
 	delete ls;
 	
+#if 0 // BK - disable LOD workarounds.
 	print_texlod_workarounds(uses_texlod_impl, uses_texlodproj_impl, str);
+#endif // 0
 	
 	// Add the optimized glsl code
 	str.asprintf_append("%s", body.c_str());
@@ -339,7 +341,7 @@ void ir_print_glsl_visitor::newline_deindent()
 
 void ir_print_glsl_visitor::print_var_name (ir_variable* v)
 {
-    long id = (long)hash_table_find (globals->var_hash, v);
+    uintptr_t id = (uintptr_t)hash_table_find (globals->var_hash, v);
 	if (!id && v->data.mode == ir_var_temporary)
 	{
         id = ++globals->var_counter;
@@ -379,7 +381,7 @@ void ir_print_glsl_visitor::print_precision (ir_instruction* ir, const glsl_type
 	// and for whatever reason our type ended up having undefined precision.
 	if (prec == glsl_precision_undefined &&
 		type && type->is_float() &&
-		this->state->stage == MESA_SHADER_FRAGMENT &&
+//		this->state->stage == MESA_SHADER_FRAGMENT &&
 		!this->state->had_float_precision)
 	{
 		prec = glsl_precision_high;
@@ -464,7 +466,7 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	// give an id to any variable defined in a function that is not an uniform
 	if ((this->mode == kPrintGlslNone && ir->data.mode != ir_var_uniform))
 	{
-		long id = (long)hash_table_find (globals->var_hash, ir);
+		uintptr_t id = (uintptr_t)hash_table_find (globals->var_hash, ir);
 		if (id == 0)
 		{
 			id = ++globals->var_counter;
@@ -828,6 +830,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	glsl_sampler_dim sampler_dim = (glsl_sampler_dim)ir->sampler->type->sampler_dimensionality;
 	const bool is_shadow = ir->sampler->type->sampler_shadow;
 	const bool is_array = ir->sampler->type->sampler_array;
+	const bool is_msaa = ir->op == ir_txf_ms;
 
 	if (ir->op == ir_txs)
 	{
@@ -849,9 +852,12 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		sampler_uv_dim += 1;
 	if (is_array)
 		sampler_uv_dim += 1;
+	if (is_msaa)
+		sampler_uv_dim += 1;
 	const bool is_proj = ((ir->op == ir_tex || ir->op == ir_txb || ir->op == ir_txl || ir->op == ir_txd) && uv_dim > sampler_uv_dim);
 	const bool is_lod = (ir->op == ir_txl);
 	
+#if 0 // BK - disable LOD workarounds.
 	if (is_lod && state->es_shader && state->language_version < 300 && state->stage == MESA_SHADER_FRAGMENT)
 	{
 		// Special workaround for GLES 2.0 LOD samplers to prevent a lot of debug spew.
@@ -880,27 +886,26 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		else
 			uses_texlod_impl |= (1 << position);
 	}
+#endif // 0
 
-	
-    // texture function name
-    //ACS: shadow lookups and lookups with dimensionality included in the name were deprecated in 130
-    if(state->language_version<130) 
-    {
-        buffer.asprintf_append ("%s", is_shadow ? "shadow" : "texture");
-        buffer.asprintf_append ("%s", tex_sampler_dim_name[sampler_dim]);
-    }
-    else 
-    {
-        if (ir->op == ir_txf || ir->op == ir_txf_ms)
-            buffer.asprintf_append ("texelFetch");
-        else
-            buffer.asprintf_append ("texture");
-    }
+	// texture function name
+	//ACS: shadow lookups and lookups with dimensionality included in the name were deprecated in 130
+	if(state->language_version<130) 
+	{
+		buffer.asprintf_append ("%s", is_shadow ? "shadow" : "texture");
+		buffer.asprintf_append ("%s", tex_sampler_dim_name[sampler_dim]);
+	}
+	else
+	{
+		if (ir->op == ir_txf || ir->op == ir_txf_ms)
+			buffer.asprintf_append ("texelFetch");
+		else
+			buffer.asprintf_append ("texture");
+	}
 
 	if (is_array && state->EXT_texture_array_enable)
 		buffer.asprintf_append ("Array");
-	
-	if (is_proj)
+	if (ir->op == ir_tex && is_proj)
 		buffer.asprintf_append ("Proj");
 	if (ir->op == ir_txl)
 		buffer.asprintf_append ("Lod");
@@ -936,7 +941,7 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 	ir->coordinate->accept(this);
 	
 	// lod
-	if (ir->op == ir_txl || ir->op == ir_txf)
+	if (ir->op == ir_txl || ir->op == ir_txf || ir->op == ir_txf_ms)
 	{
 		buffer.asprintf_append (", ");
 		ir->lod_info.lod->accept(this);
@@ -1332,7 +1337,7 @@ void print_float (string_buffer& buffer, float f)
 	if (f != f)
 		strcpy(tmp, "(0.0/0.0)");
 
-	#if _MSC_VER
+	#if defined(_MSC_VER)
 	// While gcc would print something like 1.0e+07, MSVC will print 1.0e+007 -
 	// only for exponential notation, it seems, will add one extra useless zero. Let's try to remove
 	// that so compiler output matches.
