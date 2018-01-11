@@ -937,8 +937,11 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
 		buffer.asprintf_append ("Array");
 	if (ir->op == ir_tex && is_proj)
 		buffer.asprintf_append ("Proj");
-	if (ir->op == ir_txl)
+	if (ir->op == ir_txl)  {
+		if (is_proj)
+			buffer.asprintf_append ("Proj");
 		buffer.asprintf_append ("Lod");
+	}
 	if (ir->op == ir_txd)
 		buffer.asprintf_append ("Grad");
     if (ir->offset != NULL)
