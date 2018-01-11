@@ -498,10 +498,39 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 	
 	buffer.asprintf_append ("%s%s%s%s",
 							cent, inv, interp[ir->data.interpolation], mode[decormode][ir->data.mode]);
+
+
 	print_precision (ir, ir->type);
 	print_type(buffer, ir->type, false);
+
+	if (ir->type->base_type == GLSL_TYPE_INTERFACE)
+	{
+		buffer.asprintf_append("\n{\n");
+
+		for (auto pid = 0u; pid < ir->type->length; ++pid)
+		{
+			const auto &structField = ir->type->fields.structure[pid];
+			
+			buffer.asprintf_append("\t");
+			print_precision(ir, structField.type);
+			print_type(buffer, structField.type, false);
+			buffer.asprintf_append(" ");
+			buffer.asprintf_append(structField.name);
+
+			if (structField.type->base_type == GLSL_TYPE_ARRAY)
+			{
+				buffer.asprintf_append("[%u]", structField.type->length);
+			}
+
+			buffer.asprintf_append(";\n");
+		}
+
+		buffer.asprintf_append("\n}");
+	}
+	
 	buffer.asprintf_append (" ");
 	print_var_name (ir);
+
 	print_type_post(buffer, ir->type, false);
 	
 	if (ir->constant_value &&
