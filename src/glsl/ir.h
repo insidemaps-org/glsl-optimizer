@@ -1278,7 +1278,6 @@ enum ir_expression_operation {
    ir_unop_rcp,
    ir_unop_rsq,
    ir_unop_sqrt,
-   ir_unop_length,
    ir_unop_normalize,
    ir_unop_exp,         /**< Log base e on gentype */
    ir_unop_log,	        /**< Natural log on gentype */

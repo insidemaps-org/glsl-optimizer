@@ -557,7 +557,6 @@ private:
    B1(exp2)
    B1(log2)
    B1(sqrt)
-   B1(length)
    B1(inversesqrt)
    B1(abs)
    B1(sign)
@@ -594,6 +593,7 @@ private:
    ir_function_signature *_unpackSnorm4x8(builtin_available_predicate avail);
    ir_function_signature *_packHalf2x16(builtin_available_predicate avail);
    ir_function_signature *_unpackHalf2x16(builtin_available_predicate avail);
+   B1(length)
    B1(distance);
    B1(dot);
    B1(cross);
@@ -2964,7 +2964,6 @@ UNOP(log,         ir_unop_log,  always_available)
 UNOP(exp2,        ir_unop_exp2, always_available)
 UNOP(log2,        ir_unop_log2, always_available)
 UNOP(sqrt,        ir_unop_sqrt, always_available)
-UNOP(length,      ir_unop_length, always_available)
 UNOP(inversesqrt, ir_unop_rsq,  always_available)
 
 /** @} */
@@ -3267,18 +3266,17 @@ builtin_builder::_unpackHalf2x16(builtin_available_predicate avail)
    body.emit(ret(expr(ir_unop_unpack_half_2x16, p)));
    return sig;
 }
-/*
+
 ir_function_signature *
 builtin_builder::_length(const glsl_type *type)
 {
    ir_variable *x = in_var(type, "x");
    MAKE_SIG(glsl_type::float_type, always_available, 1, x);
 
-   //body.emit(ret(sqrt(dot(x, x))));
-   body.emit(ret(length(x))));
+   body.emit(ret(sqrt(dot(x, x))));
 
    return sig;
-}*/
+}
 
 ir_function_signature *
 builtin_builder::_distance(const glsl_type *type)

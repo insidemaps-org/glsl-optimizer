@@ -151,7 +151,6 @@ ir_expression *atan2(operand a, operand b);
 ir_expression *exp(operand a);
 ir_expression *rsq(operand a);
 ir_expression *sqrt(operand a);
-ir_expression *length(operand a);
 ir_expression *log(operand a);
 ir_expression *sign(operand a);
 
